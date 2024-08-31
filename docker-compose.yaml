@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: my-password
+      POSTGRES_DATABASE: pgdb
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+      - ./scripts/create.sql:/docker-entrypoint-initdb.d/0_init.sql
+      - ./scripts/insert.sql:/docker-entrypoint-initdb.d/1_init.sql
+    ports:
+      - "5437:5432"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: 'no'
+    ports:
+      - "8989:8989"
+    environment:
+      POSTGRES_DB: pgdb
+      POSTGRES_PASSWORD: my-password
+      POSTGRES_PORT: "5432"
+      
+    links:
+      - "db:database"
+
+
+volumes:
+  postgresql:
