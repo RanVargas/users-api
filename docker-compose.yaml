@@ -1,32 +1,46 @@
 services:
-  db:
-    image: postgres:latest
-    restart: always
-    environment:
-      POSTGRES_PASSWORD: my-password
-      POSTGRES_DATABASE: pgdb
-    volumes:
-      - postgresql:/var/lib/postgresql/data
-      - ./scripts/create.sql:/docker-entrypoint-initdb.d/0_init.sql
-      - ./scripts/insert.sql:/docker-entrypoint-initdb.d/1_init.sql
-    ports:
-      - "5437:5432"
-
   api:
+    container_name: REST_API
     build:
       context: .
       dockerfile: Dockerfile
     restart: 'no'
     ports:
-      - "8989:8989"
+      - "8989:8080"
+    depends_on:
+      go_db:
+        condition: service_healthy
     environment:
-      POSTGRES_DB: pgdb
-      POSTGRES_PASSWORD: my-password
+      POSTGRES_DB: "pgdb"
+      POSTGRES_PASSWORD: "my-password"
       POSTGRES_PORT: "5432"
-      
+      JWT_SECRET: "xGg7diidnny0KUBtLL07yBYPr4Fgtr3SI3"
+      POSTGRES_HOST: "go_db"
+      POSTGRES_USERNAME: "users-admin"
+      X-API-KEY: "27ykjRHdOHsPVrItYSFUDU9uskuhfDPh7"
     links:
-      - "db:database"
+      - "go_db:database"
+
+  go_db:
+    image: postgres:latest
+    restart: always
+    container_name: go_db
+    environment:
+      POSTGRES_PASSWORD: "my-password"
+      POSTGRES_DB: "pgdb"
+      POSTGRES_USER: "users-admin"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U users-admin" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgresqlV2:/var/lib/postgresql/data
+      - ./scripts/create.sql:/docker-entrypoint-initdb.d/0_init.sql
+      - ./scripts/insert.sql:/docker-entrypoint-initdb.d/1_init.sql
+    ports:
+      - "5437:5432"
 
 
 volumes:
-  postgresql:
+  postgresqlV2:
