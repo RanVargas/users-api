@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     restart: 'no'
     ports:
-      - "8989:8080"
+      - "8989:8989"
     depends_on:
       go_db:
         condition: service_healthy
@@ -18,6 +18,7 @@ services:
       POSTGRES_HOST: "go_db"
       POSTGRES_USERNAME: "users-admin"
       X-API-KEY: "27ykjRHdOHsPVrItYSFUDU9uskuhfDPh7"
+      API-PORT: ":8989"
     links:
       - "go_db:database"
 
@@ -31,7 +32,7 @@ services:
       POSTGRES_USER: "users-admin"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U users-admin" ]
-      interval: 10s
+      interval: 60s
       timeout: 5s
       retries: 5
     volumes:

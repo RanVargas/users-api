@@ -1,9 +1,12 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -21,18 +24,30 @@ func Login(ctx *gin.Context) {
 	}
 	result := database.DB.Where("email = ?", data.Email).First(&user)
 	if result.Error != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Email or Password"})
+		} else {
+			log.Printf("Database error: %v", result.Error)
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		}
 		return
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(data.Password), []byte(user.Password))
+	if user.Id == 0 {
+		log.Printf("User Found but ID is 0 from email: %s", data.Email)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user data"})
+		return
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data.Password))
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
+	log.Printf("Creating token for user ID: %d", user.Id)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  user.ID,
+		"id":  user.Id,
 		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
 	})
 
@@ -41,8 +56,13 @@ func Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.SetSameSite(http.SameSiteLaxMode)
-	ctx.SetCookie("Authorization", tokenString, 3600*2, "/", "", false, true)
+	log.Printf("Created token: %s", tokenString)
+	ctx.JSON(http.StatusOK, gin.H{
+		"message":       "Login successful",
+		"Authorization": tokenString,
+	})
+	//ctx.SetSameSite(http.SameSiteLaxMode)
+	//ctx.SetCookie("Authorization", tokenString, 3600*2, "/", "", false, true)
 }
 
 func Validate(ctx *gin.Context) {
