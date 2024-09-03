@@ -9,13 +9,19 @@ type RoleRepository struct {
 	db *gorm.DB
 }
 
-func (repo *RoleRepository) NewRoleRepository(db *gorm.DB) *RoleRepository {
+/*
+/roles. all roles
+/roles/uid : role details für specific uid
+/roles/uid/users : all users with a specific role
+*/
+
+func NewRoleRepository(db *gorm.DB) *RoleRepository {
 	return &RoleRepository{db: db}
 }
 
-func (repo *RoleRepository) FindRoleById(id uint) (*models.Role, error) {
+func (repo *RoleRepository) FindRoleById(uid string) (*models.Role, error) {
 	var role models.Role
-	err := repo.db.Where("id = ?", id).First(&role).Error
+	err := repo.db.Where("uid = ?", uid).First(&role).Error
 	if err != nil {
 		return nil, err
 	}

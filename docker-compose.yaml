@@ -30,6 +30,7 @@ services:
       POSTGRES_PASSWORD: "my-password"
       POSTGRES_DB: "pgdb"
       POSTGRES_USER: "users-admin"
+      POSTGRES_USERNAME: "users-admin"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U users-admin" ]
       interval: 60s

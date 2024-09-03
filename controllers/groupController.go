@@ -7,7 +7,14 @@ import (
 	"net/http"
 	"users-api/database"
 	"users-api/models"
+	"users-api/repository"
 )
+
+var groupRepo *repository.GroupRepository
+
+func InitializeGroupsRepo() {
+	groupRepo = repository.NewGroupRepository(database.DB)
+}
 
 func CreateGroup(ctx *gin.Context) {
 	var group models.Group

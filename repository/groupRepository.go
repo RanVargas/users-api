@@ -9,7 +9,7 @@ type GroupRepository struct {
 	db *gorm.DB
 }
 
-func (repo *GroupRepository) NewGroupRepository(db *gorm.DB) *GroupRepository {
+func NewGroupRepository(db *gorm.DB) *GroupRepository {
 	return &GroupRepository{db: db}
 }
 
@@ -22,11 +22,11 @@ func (repo *GroupRepository) UpdateGroup(group *models.Group) error {
 }
 
 func (repo *GroupRepository) DeleteGroup(uid string) error {
-	return repo.db.Delete("uid = ", uid).Error
+	return repo.db.Delete("uid = ?", uid).Error
 }
 
 func (repo *GroupRepository) FindGroupById(uid string) error {
-	return repo.db.Where("uid = ", uid).Error
+	return repo.db.Where("uid = ?", uid).Error
 }
 
 func (repo *GroupRepository) FindAllGroups() ([]*models.Group, error) {

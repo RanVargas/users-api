@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +13,7 @@ type User struct {
 	Uid        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()"`
 	Email      string    `gorm:"type:varchar(100);unique" json:"email"`
 	Status     int16     `gorm:"default:0" json:"status"`
-	RoleID     uint      `gorm:"column:role_id" json:"role_id"`
+	RoleID     int       `gorm:"column:Role_id" json:"role_id"`
 	Role       Role      `gorm:"foreignKey:RoleID" json:"role"`
 }
 

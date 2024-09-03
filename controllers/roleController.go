@@ -7,7 +7,14 @@ import (
 	"net/http"
 	"users-api/database"
 	"users-api/models"
+	"users-api/repository"
 )
+
+var roleRepo *repository.RoleRepository
+
+func InitializeRolesRepo() {
+	roleRepo = repository.NewRoleRepository(database.DB)
+}
 
 func CreateRole(ctx *gin.Context) {
 	var role models.Role

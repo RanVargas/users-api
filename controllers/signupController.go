@@ -7,9 +7,11 @@ import (
 	"os"
 	"users-api/database"
 	"users-api/models"
+	"users-api/repository"
 )
 
 func Signup(ctx *gin.Context) {
+	userRepo := repository.NewUserRepository(database.DB)
 	apiKey := ctx.Request.Header.Get("X-API-KEY")
 	envApiKey := os.Getenv("X-API-KEY")
 
@@ -18,19 +20,33 @@ func Signup(ctx *gin.Context) {
 		return
 	}
 
-	var user models.User
-	if err := ctx.ShouldBind(&user); err != nil {
+	var body struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Status   int16  `json:"status"`
+		RoleId   int    `json:"role_id"`
+	}
+	if err := ctx.ShouldBind(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	user.Password = string(hash)
-	if err := database.DB.Create(&user).Error; err != nil {
+	body.Password = string(hash)
+
+	user := models.User{
+		Name:     body.Name,
+		Email:    body.Email,
+		Password: body.Password,
+		Status:   body.Status,
+		RoleID:   body.RoleId,
+	}
+	if err := userRepo.CreateUser(&user); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
