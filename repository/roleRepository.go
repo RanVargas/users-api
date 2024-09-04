@@ -9,17 +9,11 @@ type RoleRepository struct {
 	db *gorm.DB
 }
 
-/*
-/roles. all roles
-/roles/uid : role details für specific uid
-/roles/uid/users : all users with a specific role
-*/
-
 func NewRoleRepository(db *gorm.DB) *RoleRepository {
 	return &RoleRepository{db: db}
 }
 
-func (repo *RoleRepository) FindRoleById(uid string) (*models.Role, error) {
+func (repo *RoleRepository) FindRoleByUid(uid string) (*models.Role, error) {
 	var role models.Role
 	err := repo.db.Where("uid = ?", uid).First(&role).Error
 	if err != nil {
@@ -37,13 +31,13 @@ func (repo *RoleRepository) CreateRole(role models.Role) (*models.Role, error) {
 }
 
 func (repo *RoleRepository) UpdateRole(role models.Role) error {
-	err := repo.db.Save(&role).Error
+	err := repo.db.Where("uid = ?", role.Uid).Save(&role).Error
 	return err
 }
 
-func (repo *RoleRepository) DeleteRole(id uint) error {
+func (repo *RoleRepository) DeleteRole(uid string) error {
 	var role models.Role
-	err := repo.db.Where("id = ?", id).Delete(&role).Error
+	err := repo.db.Where("uid = ?", uid).Delete(&role).Error
 	return err
 }
 

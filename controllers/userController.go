@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
 	"users-api/database"
@@ -12,22 +13,75 @@ import (
 
 var userRepo *repository.UserRepository
 
+var userPasswordRepo *repository.UserPasswordRepository
+
 func InitializeUsersRepo() {
 	userRepo = repository.NewUserRepository(database.DB)
 }
 
+func InitializeUserPasswordRepo() {
+	userPasswordRepo = repository.NewUserPasswordRepository(database.DB)
+}
+
 func CreateUser(ctx *gin.Context) {
-	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	var body struct {
+		Name      string   `json:"name" binding:"required"`
+		Email     string   `json:"email" binding:"required"`
+		Password  string   `json:"password" binding:"required"`
+		Status    int16    `json:"status" binding:"required"`
+		RoleUid   string   `json:"role_uid" binding:"required"`
+		GroupsUid []string `json:"groups_uid" binding:"required"`
+	}
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err := userRepo.CreateUser(&user)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	body.Password = string(hash)
+	role, err := roleRepo.FindRoleByUid(body.RoleUid)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Wrong Role Uid provided"})
+		return
+	}
+	groups := make([]models.Group, len(body.GroupsUid))
+	for i := 0; i < len(body.GroupsUid); i++ {
+		group, e := groupRepo.FindGroupByUid(body.GroupsUid[i])
+		if e != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Provided group not found."})
+			return
+		}
+		groups = append(groups, *group)
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"data": user})
+	user := models.User{
+		Email:    body.Email,
+		Password: body.Password,
+		Name:     body.Name,
+		Status:   body.Status,
+		RoleID:   role.ID,
+		Group:    groups,
+	}
+
+	if err := userRepo.CreateUser(&user); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user, details: " + err.Error()})
+		return
+	}
+
+	userPassword := models.UserPassword{
+		UserID:       user.ID,
+		UserPassword: user.Password,
+	}
+	if err := userPasswordRepo.CreateUserPassword(&userPassword); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"data": body})
 }
 
 func GetAllUsers(ctx *gin.Context) {
@@ -47,17 +101,17 @@ func UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	err := userRepo.UpdateUser(&user)
-	if err.Error != nil {
+	if err := userRepo.UpdateUser(&user); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"data": user})
 }
 
 func DeleteUser(ctx *gin.Context) {
 	id := ctx.Param("uid")
-	if err := database.DB.Delete(&models.User{}).Where("uid = ", id).Error; err != nil {
+	if err := userRepo.DeleteUser(id); err != nil {
 		if errors.Is(err, gorm.ErrInvalidData) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
@@ -110,7 +164,7 @@ func GetUserAndRoleByUid(ctx *gin.Context) {
 }
 
 func GetUsersByRole(ctx *gin.Context) {
-	roleId := ctx.Param("roleId")
+	roleId := ctx.Param("uid")
 	users, err := userRepo.GetAllUsersByRoleId(roleId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

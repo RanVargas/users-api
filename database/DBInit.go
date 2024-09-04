@@ -13,16 +13,15 @@ var DB *gorm.DB
 func DBInit() {
 	envVars := LoadEnvVariables()
 
-	url := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=America/New_York",
+	url := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
 		envVars.DatabaseHost, envVars.DatabaseUsername, envVars.DatabasePassword,
-		envVars.DatabaseName, envVars.DatabasePort)
-	fmt.Println("This is the current URL that has been gotten: " + url)
+		envVars.DatabaseName, envVars.DatabasePort, envVars.DatabaseSslMode, envVars.DatabaseTimeZone)
 	db, err := gorm.Open(postgres.Open(url), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect to database: " + err.Error())
 	}
 	DB = db
-	err = DB.AutoMigrate(&models.User{}, &models.Group{}, &models.Role{})
+	err = DB.AutoMigrate(&models.User{}, &models.Group{}, &models.Role{}, &models.UserPassword{}, &models.GroupUserMap{})
 	if err != nil {
 		log.Fatal(err)
 		return

@@ -56,8 +56,8 @@ func UpdateGroup(ctx *gin.Context) {
 }
 
 func DeleteGroup(ctx *gin.Context) {
-	id := ctx.Param("id")
-	if err := database.DB.Delete(&models.Group{}, id).Error; err != nil {
+	id := ctx.Param("uid")
+	if err := groupRepo.DeleteGroup(id); err != nil {
 		if errors.Is(err, gorm.ErrInvalidData) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
@@ -68,9 +68,9 @@ func DeleteGroup(ctx *gin.Context) {
 }
 
 func GetGroup(ctx *gin.Context) {
-	id := ctx.Param("id")
-	var group models.Group
-	if err := database.DB.First(&group, id).Error; err != nil {
+	id := ctx.Param("uid")
+	group, err := groupRepo.FindGroupByUid(id)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return

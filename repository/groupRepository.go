@@ -18,15 +18,19 @@ func (repo *GroupRepository) CreateGroup(group *models.Group) error {
 }
 
 func (repo *GroupRepository) UpdateGroup(group *models.Group) error {
-	return repo.db.Save(group).Error
+	return repo.db.Where("uid=?", group.Uid).Save(group).Error
 }
 
 func (repo *GroupRepository) DeleteGroup(uid string) error {
-	return repo.db.Delete("uid = ?", uid).Error
+	return repo.db.Where("uid = ?", uid).Delete(&models.Group{}).Error
 }
 
-func (repo *GroupRepository) FindGroupById(uid string) error {
-	return repo.db.Where("uid = ?", uid).Error
+func (repo *GroupRepository) FindGroupByUid(uid string) (*models.Group, error) {
+	var group models.Group
+	if err := repo.db.Where("uid = ?", uid).First(&group).Error; err != nil {
+		return nil, err
+	}
+	return &group, nil
 }
 
 func (repo *GroupRepository) FindAllGroups() ([]*models.Group, error) {

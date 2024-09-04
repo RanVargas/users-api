@@ -26,7 +26,6 @@ func RequireAuth(ctx *gin.Context) {
 	tokenString = strings.TrimSpace(tokenString)
 	workedTokenString := strings.TrimPrefix(tokenString, "Bearer ")
 
-	log.Printf("This is the token gotten: %s", workedTokenString)
 	parts := strings.Split(workedTokenString, ".")
 	if len(parts) != 3 {
 		log.Printf("Token does not have the correct structure, expected 3 parts but got %d", len(parts))
@@ -63,18 +62,16 @@ func RequireAuth(ctx *gin.Context) {
 
 		var user models.User
 		userId := int(claims["id"].(float64))
-		log.Printf("This was the token received from middleware: %s", tokenString)
-		log.Printf("This is the id found in the JWT %v", userId)
 		if err := database.DB.First(&user, userId).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				fmt.Println(fmt.Sprintf("The id gotten from database is: %s, as such it has not been possible to continue", user.Id))
+				fmt.Println(fmt.Sprintf("The id gotten from database is: %s, as such it has not been possible to continue", user.ID))
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Id retrieval error"})
 				ctx.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
 		}
-		if user.Id == 0 {
-			fmt.Println("Id has come as 0")
+		if user.ID == 0 {
+			log.Printf("Id has come as 0")
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return

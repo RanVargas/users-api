@@ -23,6 +23,8 @@ type EnvVars struct {
 	DatabasePort     string
 	JwtSecret        string
 	XApiKey          string
+	DatabaseSslMode  string
+	DatabaseTimeZone string
 }
 
 func LoadEnvVariables() EnvVars {
@@ -34,12 +36,15 @@ func LoadEnvVariables() EnvVars {
 		DatabasePort:     os.Getenv("POSTGRES_PORT"),
 		JwtSecret:        os.Getenv("JWT_SECRET"),
 		XApiKey:          os.Getenv("X-API-KEY"),
+		DatabaseSslMode:  os.Getenv("POSTGRES_SSL_MODE"),
+		DatabaseTimeZone: os.Getenv("POSTGRES_TIMEZONE"),
 	}
 	if value.DatabaseUsername == "" || value.DatabasePassword == "" ||
 		value.DatabaseHost == "" || value.DatabaseName == "" ||
 		value.DatabasePort == "" || value.JwtSecret == "" ||
-		value.XApiKey == "" {
-		panic("failed to load environment variables")
+		value.XApiKey == "" || value.DatabaseSslMode == "" ||
+		value.DatabaseTimeZone == "" {
+		panic("failed to load essential environment variables")
 	}
 	return value
 }

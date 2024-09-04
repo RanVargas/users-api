@@ -56,8 +56,8 @@ func UpdateRole(ctx *gin.Context) {
 }
 
 func DeleteRole(ctx *gin.Context) {
-	id := ctx.Param("id")
-	if err := database.DB.Delete(&models.Role{}, id).Error; err != nil {
+	uid := ctx.Param("uid")
+	if err := roleRepo.DeleteRole(uid); err != nil {
 		if errors.Is(err, gorm.ErrInvalidData) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
@@ -68,9 +68,9 @@ func DeleteRole(ctx *gin.Context) {
 }
 
 func GetRole(ctx *gin.Context) {
-	id := ctx.Param("id")
-	var role models.Role
-	if err := database.DB.First(&role, id).Error; err != nil {
+	uid := ctx.Param("uid")
+	role, err := roleRepo.FindRoleByUid(uid)
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return

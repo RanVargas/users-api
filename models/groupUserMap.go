@@ -5,11 +5,11 @@ import (
 )
 
 type GroupUserMap struct {
-	gorm.DB
-	Id      uint  `gorm:"primaryKey;autoIncrement"`
-	UserID  int   `gorm:"column:User_id" json:"user_id"`
-	GroupID int   `gorm:"column:Group_id" json:"group_id"`
+	gorm.Model
+	//Id      uint  `gorm:"primaryKey;autoIncrement"`
+	UserID  uint  `json:"user_id"`
 	User    User  `gorm:"foreignKey:UserID"`
+	GroupID uint  `json:"group_id"`
 	Group   Group `gorm:"foreignKey:GroupID"`
 }
 

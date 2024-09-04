@@ -15,50 +15,51 @@ func init() {
 	controllers.InitializeUsersRepo()
 	controllers.InitializeRolesRepo()
 	controllers.InitializeGroupsRepo()
+	controllers.InitializeUserPasswordRepo()
 }
 
 func main() {
 
 	r := gin.Default()
 
-	r.POST("/users", middlewares.RequireAuth, controllers.CreateUser)
+	r.POST("/users", middlewares.RequireAuth, controllers.CreateUser) //Tested
 	r.GET("/users", middlewares.RequireAuth, func(ctx *gin.Context) {
 		search := ctx.Query("searchTerm")
 		limitParam := ctx.DefaultQuery("limit", "10")
 		l, _ := strconv.Atoi(limitParam)
 		orderBy := ctx.DefaultQuery("orderBy", "id")
 		if search == "" {
-			controllers.GetAllUsers(ctx)
+			controllers.GetAllUsers(ctx) //Tested
 		} else {
-			controllers.FindUsersByQueryParams(ctx, search, l, orderBy)
+			controllers.FindUsersByQueryParams(ctx, search, l, orderBy) //Tested
 		}
 
 	})
 	r.GET("/users/:uid", middlewares.RequireAuth, controllers.GetUserAndRoleByUid) //Tested
-	r.PUT("/users/:uid", middlewares.RequireAuth, controllers.UpdateUser)
-	r.DELETE("/users/:uid", middlewares.RequireAuth, controllers.DeleteUser)
+	r.PUT("/users/:uid", middlewares.RequireAuth, controllers.UpdateUser)          //Tested
+	r.DELETE("/users/:uid", middlewares.RequireAuth, controllers.DeleteUser)       //Tested
 	r.GET("/users/:uid/groups", middlewares.RequireAuth, controllers.GetGroupsOfUser)
+	//r.PUT("/users/:uid/password", middlewares.RequireAuth, controllers.UpdateUserPassword)
 
-	//// GetAllUsersByRoleId GetAllGroupsOfUser GetUserAndRoleByUid FindUsersByQueryParameters
+	r.POST("/groups", middlewares.RequireAuth, controllers.CreateGroup)        // Tested
+	r.GET("/groups", middlewares.RequireAuth, controllers.GetAllGroups)        // Tested
+	r.GET("/groups/:uid", middlewares.RequireAuth, controllers.GetGroup)       // Tested
+	r.PUT("/groups/:uid", middlewares.RequireAuth, controllers.UpdateGroup)    // Tested
+	r.DELETE("/groups/:uid", middlewares.RequireAuth, controllers.DeleteGroup) // Tested
 
-	r.POST("/groups", middlewares.RequireAuth, controllers.CreateGroup)
-	r.GET("/groups", middlewares.RequireAuth, controllers.GetAllGroups) // Tested
-	r.GET("/groups/:id", middlewares.RequireAuth, controllers.GetGroup)
-	r.PUT("/groups/:id", middlewares.RequireAuth, controllers.UpdateGroup)
-	r.DELETE("/groups/:id", middlewares.RequireAuth, controllers.DeleteGroup)
-
-	r.POST("/roles", middlewares.RequireAuth, controllers.CreateRole)
-	r.GET("/roles", middlewares.RequireAuth, controllers.GetAllRoles) // Tested
+	r.POST("/roles", middlewares.RequireAuth, controllers.CreateRole)  // Tested
+	r.GET("/roles", middlewares.RequireAuth, controllers.GetAllRoles)  // Tested
+	r.GET("/roles/:uid", middlewares.RequireAuth, controllers.GetRole) // Tested
 	//r.GET("/roles/:id", middlewares.RequireAuth, controllers.GetRole)
-	r.PUT("/roles/:id", middlewares.RequireAuth, controllers.UpdateRole)
-	r.DELETE("/roles/:id", middlewares.RequireAuth, controllers.DeleteRole)
-	r.GET("/roles/:roleId/users", middlewares.RequireAuth, controllers.GetUsersByRole)
+	r.PUT("/roles/:uid", middlewares.RequireAuth, controllers.UpdateRole)           // Tested
+	r.DELETE("/roles/:uid", middlewares.RequireAuth, controllers.DeleteRole)        // Tested
+	r.GET("/roles/:uid/users", middlewares.RequireAuth, controllers.GetUsersByRole) // Tested
 
-	r.POST("/login", controllers.Login)
-	r.POST("/signup", controllers.Signup)
+	r.POST("/login", controllers.Login)   // Tested
+	r.POST("/signup", controllers.Signup) // Tested
 	r.POST("/logout", middlewares.RequireAuth, controllers.Logout)
 
-	if err := r.Run(os.Getenv("API-PORT")); err != nil {
+	if err := r.Run(os.Getenv("API_SERVING_ADDRESS") + ":" + os.Getenv("API_PORT")); err != nil {
 		log.Fatal(err)
 	}
 }

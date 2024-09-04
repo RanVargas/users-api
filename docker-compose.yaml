@@ -18,7 +18,10 @@ services:
       POSTGRES_HOST: "go_db"
       POSTGRES_USERNAME: "users-admin"
       X-API-KEY: "27ykjRHdOHsPVrItYSFUDU9uskuhfDPh7"
-      API-PORT: ":8989"
+      API_PORT: "8989"
+      POSTGRES_SSL_MODE: "disable"
+      POSTGRES_TIMEZONE: "America/New_York"
+      API_SERVING_ADDRESS: "0.0.0.0"
     links:
       - "go_db:database"
 
@@ -33,7 +36,7 @@ services:
       POSTGRES_USERNAME: "users-admin"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U users-admin" ]
-      interval: 60s
+      interval: 30s
       timeout: 5s
       retries: 5
     volumes:
