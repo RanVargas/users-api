@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"log"
 	"net/http"
 	"users-api/database"
 	"users-api/models"
@@ -68,7 +69,8 @@ func CreateUser(ctx *gin.Context) {
 	}
 
 	if err := userRepo.CreateUser(&user); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user, details: " + err.Error()})
+		log.Printf("Error creating user in database: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user due to internal error"})
 		return
 	}
 
@@ -77,11 +79,12 @@ func CreateUser(ctx *gin.Context) {
 		UserPassword: user.Password,
 	}
 	if err := userPasswordRepo.CreateUserPassword(&userPassword); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("Error creating user password in database: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user password due to internal error"})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"data": body})
+	ctx.JSON(http.StatusCreated, body)
 }
 
 func GetAllUsers(ctx *gin.Context) {
@@ -91,34 +94,38 @@ func GetAllUsers(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": result})
+	ctx.JSON(http.StatusOK, result)
 }
 
 func UpdateUser(ctx *gin.Context) {
 	var user models.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("Could not bind body to model: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Could not bind body to model, bad request data"})
 		return
 	}
 
 	if err := userRepo.UpdateUser(&user); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("Error updating user in database: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update user due to internal error"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": user})
+	ctx.JSON(http.StatusOK, user)
 }
 
 func DeleteUser(ctx *gin.Context) {
 	id := ctx.Param("uid")
 	if err := userRepo.DeleteUser(id); err != nil {
 		if errors.Is(err, gorm.ErrInvalidData) {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			log.Printf("Error deleting user in database: %v", err)
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Could not delete user due to internal error"})
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("Error deleting user in database: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not delete user due to internal error"})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": "The User has been deleted successfully"})
+	ctx.JSON(http.StatusOK, gin.H{"result": "The User has been deleted successfully"})
 }
 
 func GetUser(ctx *gin.Context) {
@@ -132,21 +139,22 @@ func GetUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": user})
+	ctx.JSON(http.StatusOK, user)
 }
 
 func FindUsersByQueryParams(c *gin.Context, searchTerm string, limitParam int, orderBy string) {
-	//var users []models.User
 	users, err := userRepo.FindUsersByQueryParameters(searchTerm, limitParam, orderBy)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("Error finding users in database: %v", err)
 			c.JSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 			return
 		}
+		log.Printf("Error finding users in database: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": users})
+	c.JSON(http.StatusOK, users)
 }
 
 func GetUserAndRoleByUid(ctx *gin.Context) {
@@ -154,13 +162,14 @@ func GetUserAndRoleByUid(ctx *gin.Context) {
 	user, err := userRepo.GetUserAndRoleByUid(uid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("Error finding user in database: %v", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": user})
+	ctx.JSON(http.StatusOK, user)
 }
 
 func GetUsersByRole(ctx *gin.Context) {
@@ -168,13 +177,14 @@ func GetUsersByRole(ctx *gin.Context) {
 	users, err := userRepo.GetAllUsersByRoleId(roleId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("Error finding users in database: %v", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not find users due to internal error"})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": users})
+	ctx.JSON(http.StatusOK, users)
 }
 
 func GetGroupsOfUser(ctx *gin.Context) {
@@ -182,11 +192,68 @@ func GetGroupsOfUser(ctx *gin.Context) {
 	groups, err := userRepo.GetAllGroupsOfUser(uid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("Error finding users in database: %v", err)
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": groups})
+	ctx.JSON(http.StatusOK, groups)
+}
+
+func UpdateUserPassword(ctx *gin.Context) {
+	uid := ctx.Param("uid")
+	var body struct {
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+		Uid      string `json:"uid" binding:"required"`
+	}
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		log.Printf("Encounterd Error while binding body to model: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request body"})
+		return
+	}
+	user, er := userRepo.GetUser(uid)
+	if er != nil {
+		if errors.Is(er, gorm.ErrRecordNotFound) {
+			log.Printf("Encounterd Error getting user: %v", er)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User to Update Not Found"})
+			return
+		}
+		log.Printf("Encounterd Error while retrieving user %v", er)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+	userPassword, err := userPasswordRepo.GetUserPassword(user.ID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("Encounterd Error while getting user-password: %v", err)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "User-password to Update Not Found"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error " + err.Error()})
+		return
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	if err != nil {
+		log.Printf("Encounterd Error while encrypting user password: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error encrypting password"})
+		return
+	}
+	body.Password = string(hash)
+	userPassword.UserPassword = body.Password
+	user.Password = body.Password
+	if e := userPasswordRepo.UpdateUserPassword(userPassword); e != nil {
+		log.Printf("Encounterd Error while updating user password: %v", e)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving password to database"})
+		return
+	}
+	if e := userRepo.UpdateUserPassword(user); e != nil {
+		log.Printf("Encounterd Error while updating user password: %v", e)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving password to database"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"user": user})
+
 }

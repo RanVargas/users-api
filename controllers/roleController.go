@@ -27,7 +27,7 @@ func CreateRole(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"data": role})
+	ctx.JSON(http.StatusCreated, role)
 }
 
 func GetAllRoles(ctx *gin.Context) {
@@ -37,7 +37,7 @@ func GetAllRoles(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": roles})
+	ctx.JSON(http.StatusOK, roles)
 }
 
 func UpdateRole(ctx *gin.Context) {
@@ -52,7 +52,7 @@ func UpdateRole(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": role})
+	ctx.JSON(http.StatusOK, role)
 }
 
 func DeleteRole(ctx *gin.Context) {
@@ -64,7 +64,7 @@ func DeleteRole(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": "The Role has been deleted successfully"})
+	ctx.JSON(http.StatusOK, gin.H{"result": "The Role has been deleted successfully"})
 }
 
 func GetRole(ctx *gin.Context) {
@@ -78,5 +78,5 @@ func GetRole(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"data": role})
+	ctx.JSON(http.StatusOK, role)
 }

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 	"users-api/database"
-	"users-api/models"
+	"users-api/repository"
 )
 
 func RequireAuth(ctx *gin.Context) {
@@ -60,15 +60,24 @@ func RequireAuth(ctx *gin.Context) {
 			return
 		}
 
-		var user models.User
+		userRepo := repository.NewUserRepository(database.DB)
 		userId := int(claims["id"].(float64))
-		if err := database.DB.First(&user, userId).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+		log.Printf("This is the id gotten from the conversion: %v", userId)
+		if userId == 0 {
+			log.Printf("User with id %v was not found", claims["id"].(float64))
+		}
+		user, er := userRepo.GetUserById(userId)
+		if er != nil {
+			if errors.Is(er, gorm.ErrRecordNotFound) {
 				fmt.Println(fmt.Sprintf("The id gotten from database is: %s, as such it has not been possible to continue", user.ID))
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Id retrieval error"})
 				ctx.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
+			log.Printf("Error getting user: %v", er)
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Id retrieval error"})
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
 		}
 		if user.ID == 0 {
 			log.Printf("Id has come as 0")

@@ -18,7 +18,7 @@ func (repo *GroupRepository) CreateGroup(group *models.Group) error {
 }
 
 func (repo *GroupRepository) UpdateGroup(group *models.Group) error {
-	return repo.db.Where("uid=?", group.Uid).Save(group).Error
+	return repo.db.Model(models.Group{}).Where("uid=?", group.Uid).Update("name", group.Name).Error
 }
 
 func (repo *GroupRepository) DeleteGroup(uid string) error {
@@ -27,7 +27,7 @@ func (repo *GroupRepository) DeleteGroup(uid string) error {
 
 func (repo *GroupRepository) FindGroupByUid(uid string) (*models.Group, error) {
 	var group models.Group
-	if err := repo.db.Where("uid = ?", uid).First(&group).Error; err != nil {
+	if err := repo.db.Preload("Users").Where("uid = ?", uid).First(&group).Error; err != nil {
 		return nil, err
 	}
 	return &group, nil
@@ -35,6 +35,7 @@ func (repo *GroupRepository) FindGroupByUid(uid string) (*models.Group, error) {
 
 func (repo *GroupRepository) FindAllGroups() ([]*models.Group, error) {
 	var groups []*models.Group
-	err := repo.db.Find(&groups).Error
+	err := repo.db.Preload("Users").Find(&groups).Error
+
 	return groups, err
 }

@@ -21,7 +21,7 @@ func DBInit() {
 		panic("Failed to connect to database: " + err.Error())
 	}
 	DB = db
-	err = DB.AutoMigrate(&models.User{}, &models.Group{}, &models.Role{}, &models.UserPassword{}, &models.GroupUserMap{})
+	err = DB.AutoMigrate(&models.User{}, &models.Group{}, &models.Role{}, &models.UserPassword{})
 	if err != nil {
 		log.Fatal(err)
 		return

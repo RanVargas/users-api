@@ -21,7 +21,9 @@ func (repo *UserRepository) CreateUser(user *models.User) error {
 }
 
 func (repo *UserRepository) UpdateUser(user *models.User) error {
-	return repo.db.Where("uid = ?", user.Uid).Save(user).Error
+	return repo.db.Model(&models.User{}).
+		Where("email = ?", user.Email).
+		Update("password", user.Password).Error
 }
 
 func (repo *UserRepository) DeleteUser(uid string) error {
@@ -30,9 +32,17 @@ func (repo *UserRepository) DeleteUser(uid string) error {
 
 func (repo *UserRepository) GetUser(uid string) (*models.User, error) {
 	var user models.User
-	err := repo.db.Preload("Roles").
-		Preload("Groups").Where("uid = ?", uid).First(&user).Error
+	err := repo.db.Preload("Role").
+		Where("uid = ?", uid).First(&user).Error
 	return &user, err
+}
+
+func (repo *UserRepository) GetUserById(id int) (*models.User, error) {
+	var user models.User
+	if err := repo.db.Preload("Role").Where("id = ?", id).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (repo *UserRepository) GetUserByEmail(email string) (*models.User, error) {
@@ -92,7 +102,8 @@ func (repo *UserRepository) GetUserAndRoleByUid(uid string) (*models.User, error
 
 func (repo *UserRepository) GetAllGroupsOfUser(uid string) ([]*models.Group, error) {
 	var groups []*models.Group
-	if err := repo.db.Joins("INNER JOIN groups_users_map ON groups_users_map.groups_id = groups.id").
+	if err := repo.db.
+		Joins("INNER JOIN groups_users_map ON groups_users_map.groups_id = groups.id").
 		Joins("INNER JOIN users ON users.id = groups_users_map.users_id").
 		Where("users.uid = ?", uid).Find(&groups).Error; err != nil {
 		return nil, err
@@ -110,4 +121,8 @@ func (repo *UserRepository) GetAllUsersByRoleId(roleId string) ([]*models.User, 
 		return nil, err
 	}
 	return users, nil
+}
+
+func (repo *UserRepository) UpdateUserPassword(user *models.User) error {
+	return repo.db.Model(user).Update("password", user.Password).Where("uid = ?", user.Uid).Error
 }

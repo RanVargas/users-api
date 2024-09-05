@@ -24,6 +24,7 @@ func Login(ctx *gin.Context) {
 		return
 	}
 	user, err := userRepo.GetUserByEmail(data.Email)
+	log.Printf("This is the user found: %v", user)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -54,7 +55,7 @@ func Login(ctx *gin.Context) {
 	log.Printf("Creating token for user ID: %d", user.ID)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
+		"exp": time.Now().Add(time.Hour * 6).Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
@@ -62,6 +63,7 @@ func Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error"})
 		return
 	}
+
 	log.Printf("Created token: %s", tokenString)
 	ctx.JSON(http.StatusOK, gin.H{
 		"message":       "Login successful",
@@ -82,6 +84,6 @@ func Validate(ctx *gin.Context) {
 
 func Logout(ctx *gin.Context) {
 	ctx.SetSameSite(http.SameSiteLaxMode)
-	ctx.SetCookie("Authorization", "", -1, "/", "", false, true)
-	ctx.JSON(http.StatusOK, gin.H{"data": "You are logged out"})
+	ctx.Set("Authorization", "") //("Authorization", "", -1, "/", "", false, true)
+	ctx.JSON(http.StatusOK, gin.H{"result": "You are logged out"})
 }

@@ -195,6 +195,3 @@ Most endpoints require authentication, which is handled by the `RequireAuth` mid
 - The `RequireAuth` middleware is used for most endpoints to ensure proper authentication.
 - Some endpoints like user creation and signup require specific JSON payloads as shown above.
 - The search functionality for users is implemented in the GET /users endpoint and is triggered when a `searchTerm` is provided.
-
-
-This is a test change

@@ -20,9 +20,16 @@ func (repo *UserPasswordRepository) CreateUserPassword(userPassword *models.User
 }
 
 func (repo *UserPasswordRepository) GetUserPassword(userID uint) (*models.UserPassword, error) {
-	var userPassword models.UserPassword //repo.db.Where("uid = ?", uid).First(&user).Error
+	var userPassword models.UserPassword
 	if err := repo.db.Where("user_id", userID).First(&userPassword).Error; err != nil {
 		return nil, err
 	}
 	return &userPassword, nil
+}
+
+func (repo *UserPasswordRepository) UpdateUserPassword(userPassword *models.UserPassword) error {
+	return repo.db.Model(userPassword).
+		Update("user_password", userPassword.UserPassword).
+		Where("user_id = ?", userPassword.UserID).
+		Error
 }
