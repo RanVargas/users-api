@@ -49,14 +49,19 @@ func CreateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Wrong Role Uid provided"})
 		return
 	}
-	groups := make([]models.Group, len(body.GroupsUid))
-	for i := 0; i < len(body.GroupsUid); i++ {
-		group, e := groupRepo.FindGroupByUid(body.GroupsUid[i])
-		if e != nil {
+
+	var groups []models.Group
+	for _, groupUID := range body.GroupsUid {
+		if groupUID == "" {
+			continue
+		}
+		group, _ := groupRepo.FindGroupByUidWithNoUsers(groupUID)
+		if group != nil {
+			groups = append(groups, *group)
+		} else {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Provided group not found."})
 			return
 		}
-		groups = append(groups, *group)
 	}
 
 	user := models.User{
@@ -65,10 +70,9 @@ func CreateUser(ctx *gin.Context) {
 		Name:     body.Name,
 		Status:   body.Status,
 		RoleID:   role.ID,
-		Group:    groups,
 	}
 
-	if err := userRepo.CreateUser(&user); err != nil {
+	if err = userRepo.CreateUser(&user, groups); err != nil {
 		log.Printf("Error creating user in database: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user due to internal error"})
 		return

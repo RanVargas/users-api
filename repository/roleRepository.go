@@ -2,6 +2,7 @@ package repository
 
 import (
 	"gorm.io/gorm"
+	"log"
 	"users-api/models"
 )
 
@@ -31,6 +32,12 @@ func (repo *RoleRepository) CreateRole(role models.Role) (*models.Role, error) {
 }
 
 func (repo *RoleRepository) UpdateRole(role models.Role) error {
+	var existingRole models.Role
+	if err := repo.db.Where("uid = ?", role.Uid).First(&existingRole).Error; err != nil {
+		log.Printf("Error finding role with uid '%s': %v", role.Uid, err)
+		return err
+	}
+	role.ID = existingRole.ID
 	err := repo.db.Where("uid = ?", role.Uid).Save(&role).Error
 	return err
 }

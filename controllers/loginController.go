@@ -52,7 +52,6 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	log.Printf("Creating token for user ID: %d", user.ID)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  user.ID,
 		"exp": time.Now().Add(time.Hour * 6).Unix(),
@@ -64,13 +63,11 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	log.Printf("Created token: %s", tokenString)
 	ctx.JSON(http.StatusOK, gin.H{
 		"message":       "Login successful",
 		"Authorization": tokenString,
 	})
-	//ctx.SetSameSite(http.SameSiteLaxMode)
-	//ctx.SetCookie("Authorization", tokenString, 3600*2, "/", "", false, true)
+
 }
 
 func Validate(ctx *gin.Context) {
@@ -84,6 +81,6 @@ func Validate(ctx *gin.Context) {
 
 func Logout(ctx *gin.Context) {
 	ctx.SetSameSite(http.SameSiteLaxMode)
-	ctx.Set("Authorization", "") //("Authorization", "", -1, "/", "", false, true)
+	ctx.Set("Authorization", "")
 	ctx.JSON(http.StatusOK, gin.H{"result": "You are logged out"})
 }

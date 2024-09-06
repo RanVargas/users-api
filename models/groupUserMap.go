@@ -6,9 +6,9 @@ import (
 
 type GroupUserMap struct {
 	gorm.Model
-	UserID  uint  `json:"user_id"`
+	UserID  uint  `json:"users_id"`
 	User    User  `gorm:"foreignKey:UserID"`
-	GroupID uint  `json:"group_id"`
+	GroupID uint  `json:"groups_id"`
 	Group   Group `gorm:"foreignKey:GroupID"`
 }
 

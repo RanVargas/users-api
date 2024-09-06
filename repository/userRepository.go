@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"gorm.io/gorm"
+	"log"
 	"strings"
 	"users-api/models"
 )
@@ -15,15 +16,24 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (repo *UserRepository) CreateUser(user *models.User) error {
-
+func (repo *UserRepository) CreateUser(user *models.User, groups []models.Group) error {
+	//groups := make([]models.Group, len(user.Group))
+	if len(groups) == 0 {
+		return nil
+	}
+	user.Group = groups
 	return repo.db.Create(&user).Error
 }
 
 func (repo *UserRepository) UpdateUser(user *models.User) error {
+	var existingUser models.User
+	if err := repo.db.Where("uid = ?", user.Uid).First(&existingUser).Error; err != nil {
+		log.Printf("Error finding user with uid '%s': %v", user.Uid, err)
+		return err
+	}
+	user.ID = existingUser.ID
 	return repo.db.Model(&models.User{}).
-		Where("email = ?", user.Email).
-		Update("password", user.Password).Error
+		Where("email = ?", user.Email).Save(user).Error
 }
 
 func (repo *UserRepository) DeleteUser(uid string) error {
@@ -102,10 +112,14 @@ func (repo *UserRepository) GetUserAndRoleByUid(uid string) (*models.User, error
 
 func (repo *UserRepository) GetAllGroupsOfUser(uid string) ([]*models.Group, error) {
 	var groups []*models.Group
-	if err := repo.db.
-		Joins("INNER JOIN groups_users_map ON groups_users_map.groups_id = groups.id").
-		Joins("INNER JOIN users ON users.id = groups_users_map.users_id").
-		Where("users.uid = ?", uid).Find(&groups).Error; err != nil {
+
+	query :=
+		`SELECT g.*
+        FROM groups g
+        INNER JOIN groups_users_map gum ON g.id = gum.groups_id
+        INNER JOIN users u ON u.id = gum.users_id
+        WHERE u.uid = ?`
+	if err := repo.db.Raw(query, uid).Scan(&groups).Error; err != nil {
 		return nil, err
 	}
 	return groups, nil

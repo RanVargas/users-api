@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"log"
 	"net/http"
 	"users-api/database"
 	"users-api/models"
@@ -47,11 +48,12 @@ func UpdateRole(ctx *gin.Context) {
 		return
 	}
 
-	result := database.DB.Save(&role)
-	if result.Error != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+	if err := roleRepo.UpdateRole(role); err != nil {
+		log.Printf("Error updating role: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error updating user"})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, role)
 }
 

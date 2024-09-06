@@ -14,7 +14,7 @@ type User struct {
 	Status     int16     `gorm:"default:0" json:"status"`
 	RoleID     uint      `json:"role_id"`
 	Role       Role      `gorm:"foreignKey:RoleID" json:"role"`
-	Group      []Group   `gorm:"many2many:groups_users_map;foreignKey:ID;joinForeignKey:user_id;References:ID;joinReferences:group_id" json:"groups"`
+	Group      []Group   `gorm:"many2many:groups_users_map;foreignKey:ID;joinForeignKey:users_id;References:ID;joinReferences:groups_id" json:"groups"`
 }
 
 func (User) TableName() string {

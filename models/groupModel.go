@@ -9,7 +9,7 @@ type Group struct {
 	gorm.Model `json:"-"`
 	Name       string    `json:"name"`
 	Uid        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()"`
-	Users      []User    `gorm:"many2many:groups_users_map;foreignKey:ID;joinForeignKey:group_id;References:ID;joinReferences:user_id"`
+	Users      []User    `gorm:"many2many:groups_users_map;foreignKey:ID;joinForeignKey:groups_id;References:ID;joinReferences:users_id"`
 }
 
 func (Group) TableName() string {

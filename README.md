@@ -78,6 +78,11 @@ Most endpoints require authentication, which is handled by the `RequireAuth` mid
 - **Authentication**: Required
 - **Description**: Retrieves groups associated with a user.
 
+### Update User's Password
+- **Endpoint**: `PUT /users/:uid/password`
+- **Authentication**: Required
+- **Description**: Performs a change in the User's password.
+
 ### Create User
 - **Endpoint**: `POST /users`
 - **Authentication**: Required

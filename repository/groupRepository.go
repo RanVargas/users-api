@@ -33,6 +33,14 @@ func (repo *GroupRepository) FindGroupByUid(uid string) (*models.Group, error) {
 	return &group, nil
 }
 
+func (repo *GroupRepository) FindGroupByUidWithNoUsers(uid string) (*models.Group, error) {
+	var group models.Group
+	if err := repo.db.Where("uid = ?", uid).First(&group).Error; err != nil {
+		return nil, err
+	}
+	return &group, nil
+}
+
 func (repo *GroupRepository) FindAllGroups() ([]*models.Group, error) {
 	var groups []*models.Group
 	err := repo.db.Preload("Users").Find(&groups).Error
